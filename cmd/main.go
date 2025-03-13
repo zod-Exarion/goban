@@ -19,12 +19,26 @@ func main() {
 		fileInfo, err := os.Stat("debug.log")
 		if err == nil && fileInfo.Size() == 0 {
 			os.Remove("debug.log")
-		} else {
+		} else if logFileWritten {
 			fmt.Println("Errors stored in debug.log file")
 		}
 	}()
 
 	log.SetOutput(logFile)
 
+	// NOTE: Track writes to log files
+	logFileWritten = false
+	log.SetOutput(&logWriter{})
+
 	goban.RunGoban()
+}
+
+// NOTE: Custom log writer
+var logFileWritten bool
+
+type logWriter struct{}
+
+func (lw *logWriter) Write(p []byte) (n int, err error) {
+	logFileWritten = true
+	return os.Stdout.Write(p) // INFO: Print to stdout for debugging
 }

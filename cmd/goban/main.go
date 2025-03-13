@@ -8,14 +8,14 @@ import (
 )
 
 func RunGoban() {
-	// TODO: Proper location for database on Linux file system
+	// WARN: Proper location for database on Linux file system
 	db, err := database.InitDB("database.db")
 	if err != nil {
 		log.Fatalf("Unable to initialize the database: %v", err)
 	}
 	defer db.Close()
 
-	// FIX: Remove Tests before final release
+	// FIX: Run how to properly run go tests
 	test.RunTests(db)
 
 	if len(os.Args) > 1 {

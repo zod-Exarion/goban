@@ -16,7 +16,7 @@ func RunTests(db *database.Database) {
 
 func CreateDummyTasks(db *database.Database) {
 	for i := 0; i < 10; i++ {
-		task := service.CreateTask("Build database", uint(i%3))
+		task := service.CreateTask("Build database", i%3)
 
 		err := db.SaveTask(&task, true)
 		if err != nil {

@@ -10,7 +10,7 @@ const (
 	FinishedState
 )
 
-func CreateTask(text string, state uint) database.Task {
+func CreateTask(text string, state int) database.Task {
 	return database.Task{
 		TEXT:  text,
 		STATE: state,

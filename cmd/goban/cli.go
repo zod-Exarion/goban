@@ -9,6 +9,7 @@ import (
 	"github.com/spf13/cobra"
 )
 
+// HACK: Used depenency injection to create safety layer on database
 type App struct {
 	RootCmd *cobra.Command
 	DB      *database.Database
@@ -31,6 +32,10 @@ func NewApp(db *database.Database) *App {
 
 func (a *App) addCommands() {
 	a.RootCmd.AddCommand(cli.FetchCommand(a.DB))
+	a.RootCmd.AddCommand(cli.AddTaskCommand(a.DB))
+	a.RootCmd.AddCommand(cli.EditTaskCommand(a.DB))
+	a.RootCmd.AddCommand(cli.DeleteTaskCommand(a.DB))
+	a.RootCmd.AddCommand(cli.MarkTaskCommand(a.DB))
 }
 
 func (app *App) Execute() {

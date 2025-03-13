@@ -10,7 +10,7 @@ import (
 type Task struct {
 	ID    int
 	TEXT  string
-	STATE uint
+	STATE int
 }
 
 type Database struct {
@@ -45,17 +45,18 @@ func InitDB(dbName string) (*Database, error) {
 }
 
 func (db *Database) SaveTask(task *Task, updateOnConflict bool) error {
-	// insertCmd := `INSERT INTO tasks (text, state) VALUES (?, ?)`
-	var insertCmd string
+	insertCmd := `INSERT INTO tasks (text, state) VALUES (?, ?)`
 
 	if updateOnConflict {
-		insertCmd = `INSERT OR REPLACE INTO tasks (text, state) VALUES (?, ?)`
+		insertCmd += ` ON CONFLICT(id) DO UPDATE 
+                       SET text = EXCLUDED.text, 
+                           state = EXCLUDED.state`
 	} else {
-		insertCmd = `INSERT OR IGNORE INTO tasks (text, state) VALUES (?, ?)`
+		insertCmd += ` ON CONFLICT(id) DO NOTHING`
 	}
 
 	if _, err := db.conn.Exec(insertCmd, task.TEXT, task.STATE); err != nil {
-		return fmt.Errorf("error SAVING task to database: %v", err)
+		return fmt.Errorf("error saving task to database: %v", err)
 	}
 
 	return nil
@@ -66,6 +67,55 @@ func (db *Database) DeleteTask(id int) error {
 
 	if _, err := db.conn.Exec(deleteCmd, id); err != nil {
 		return fmt.Errorf("error DELETING task from database: %v", err)
+	}
+
+	return nil
+}
+
+func (db *Database) EditTask(id int, newText string) error {
+	updateQuery := `UPDATE tasks SET text = ? WHERE id = ?`
+
+	result, err := db.conn.Exec(updateQuery, newText, id)
+	if err != nil {
+		return fmt.Errorf("error updating task: %v", err)
+	}
+
+	rowsAffected, err := result.RowsAffected()
+	if err != nil {
+		return fmt.Errorf("error getting affected rows: %v", err)
+	}
+
+	if rowsAffected == 0 {
+		return fmt.Errorf("task with ID %d not found", id)
+	}
+
+	return nil
+}
+
+func (db *Database) MarkTask(id int) error {
+	updateQuery := `UPDATE tasks SET state = state + 1 WHERE id = ?`
+
+	result, err := db.conn.Exec(updateQuery, id)
+	if err != nil {
+		return fmt.Errorf("error updating task: %v", err)
+	}
+
+	rowsAffected, err := result.RowsAffected()
+	if err != nil {
+		return fmt.Errorf("error getting affected rows: %v", err)
+	}
+	if rowsAffected == 0 {
+		return fmt.Errorf("task with ID %d not found", id)
+	}
+
+	var newState int
+	err = db.conn.QueryRow("SELECT state FROM tasks WHERE id = ?", id).Scan(&newState)
+	if err != nil {
+		return fmt.Errorf("error fetching updated task state: %v", err)
+	}
+
+	if newState > 2 {
+		return db.DeleteTask(id)
 	}
 
 	return nil

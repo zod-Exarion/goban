@@ -36,6 +36,7 @@ func (a *App) addCommands() {
 	a.RootCmd.AddCommand(cli.EditTaskCommand(a.DB))
 	a.RootCmd.AddCommand(cli.DeleteTaskCommand(a.DB))
 	a.RootCmd.AddCommand(cli.MarkTaskCommand(a.DB))
+	a.RootCmd.AddCommand(cli.NukeCommand(a.DB))
 }
 
 func (app *App) Execute() {
